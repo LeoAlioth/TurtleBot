@@ -3,7 +3,6 @@
 
 import roslib; roslib.load_manifest('exercise2')
 import rospy
-from geometry_msgs.msg import Twist
 import time
 
 class getchUnix:
@@ -21,7 +20,31 @@ class getchUnix:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
         return ch
 
-pub = rospy.Publisher('move_type', Twist, queue_size = 1000)
+#--GOVOR
+
+#!/usr/bin/env python
+from std_msgs.msg import String
+
+"""
+pub = rospy.Publisher('moveTopic', String, queue_size=1000)
+rospy.init_node('controller', anonymous=True)
+rate = rospy.Rate(100) #100 Hz
+while not rospy.is_shutdown():
+  send_string = "hello world %s" % rospy.get_time()
+  rospy.loginfo(send_string)
+  pub.publish(send_string)
+  rate.sleep()
+
+if __name__ == '__main__':
+  try:
+    talker()
+  except rospy.ROSInterruptException:
+    pass
+    
+"""
+pub = rospy.Publisher('move_type', String, queue_size=1000)
+
+rospy.init_node('controller')
 
 pressed_key = " "
 
@@ -31,6 +54,7 @@ while (pressed_key != "q"):
   key = getch()
   if key != "":
     pressed_key = key
+    print(key)
   else:
     pressed_key = " "
 

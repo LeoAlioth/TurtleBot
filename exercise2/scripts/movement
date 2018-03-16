@@ -3,27 +3,54 @@
 
 import roslib; roslib.load_manifest('exercise2')
 import rospy
+from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 import time
 
-def execute_movement(move):
+rospy.init_node('movement')
+
+def movement(step):
+
+  print(step.data)
+  pub = rospy.Publisher('cmd_vel', Twist, queue_size = 1000)
+  # For the turtle simulation map the topic to /turtle1/cmd_vel
+  # For the turtlebot simulation and Turtlebot map the topic to /cmd_vel_mux/input/navi
+  
+
+  #r = rospy.Rate(1)
+
+  execute_movement(pub, step)
+  #r.sleep()
+
+
+def execute_movement(pub, move):
 
   twist = Twist()
   if move == " ":
     twist.linear.x = 0.0
     twist.angular.z = 0.0
+    pub.publish(twist)
+    time.sleep(0.5)
   elif move == "w":
     twist.linear.x = 1.0
     twist.angular.z = 0.0
+    pub.publish(twist)
+    time.sleep(0.5)
   elif move == "a":
     twist.linear.x = 0.0
     twist.angular.z = -1.0
+    pub.publish(twist)
+    time.sleep(0.5)
   elif move == "s":
     twist.linear.x = -1.0
     twist.angular.z = 0.0
+    pub.publish(twist)
+    time.sleep(0.5)
   elif move == "d":
     twist.linear.x = 0.0
     twist.angular.z = 1.0
+    pub.publish(twist)
+    time.sleep(0.5)
   elif move == "y":
     twist.linear.x = 1.0
     twist.angular.z = 0.0
@@ -63,24 +90,19 @@ def execute_movement(move):
   else:
     twist.linear.x = 0.0
     twist.angular.z = 0.0
+    pub.publish(twist)
 
-  pub.publish(twist)
+  
 
-def movement():
 
-  pub = rospy.Publisher('cmd_vel', Twist, queue_size = 1000)
-  # For the turtle simulation map the topic to /turtle1/cmd_vel
-  # For the turtlebot simulation and Turtlebot map the topic to /cmd_vel_mux/input/navi
+
+def listener():
   rospy.init_node('movement')
-
-  r = rospy.Rate(1)
-
-  step = 0.0
-  while not rospy.is_shutdown():
-    execute_movement(step)
-    
-    step = step + 1.0
-    r.sleep()
+  
+  rospy.Subscriber("move_type", String, movement) #poklice callback z dobljenim stringom
+  
+  rospy.spin()
+  #Pythonu ne pusti da exita, dokler se node ne izvrsi
 
 if __name__ == '__main__':
-    movement()
+  listener()
