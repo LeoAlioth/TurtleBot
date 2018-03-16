@@ -1,0 +1,8 @@
+<launch>
+
+  <node pkg="exercise2" type="movement" name="movement"  output="screen">
+    <remap from="cmd_vel" to="/turtle1/cmd_vel" />
+  </node>
+
+</launch>
+
