@@ -12,14 +12,16 @@ using namespace cv;
 
 Mat cv_map;
 float map_resolution = 0;
+int size_y;
+int size_x;
 tf::Transform map_transform;
 
 ros::Publisher goal_pub;
 ros::Subscriber map_sub;
 
 void mapCallback(const nav_msgs::OccupancyGridConstPtr& msg_map) {
-    int size_x = msg_map->info.width;
-    int size_y = msg_map->info.height;
+    size_x = msg_map->info.width;
+    size_y = msg_map->info.height;
 
     if ((size_x < 3) || (size_y < 3) ) {
         ROS_INFO("Map size is only x: %d,  y: %d . Not running map to image conversion", size_x, size_y);
@@ -41,9 +43,13 @@ void mapCallback(const nav_msgs::OccupancyGridConstPtr& msg_map) {
     //We have to flip around the y axis, y for image starts at the top and y for map at the bottom
     int size_y_rev = size_y-1;
 
-    for (int y = size_y_rev; y >= 0; --y) {
+   for (int y = size_y_rev; y >= 0; --y) {
+
+//        int idx_map_y = size_x * (size_y -y);
+  // for (int y = 0; y < size_y; ++y) {
 
         int idx_map_y = size_x * (size_y -y);
+        //int idx_map_y = size_x * y;
         int idx_img_y = size_x * y;
 
         for (int x = 0; x < size_x; ++x) {
@@ -76,30 +82,37 @@ void mouseCallback(int event, int x, int y, int, void* data) {
 
     int v = (int)cv_map.at<unsigned char>(y, x);
 
+    ROS_INFO("map dims (size_x: %d, size_y: %d) , clicked point (x: %d, y: %d)",size_x, size_y, x, y);
+
 	if (v != 255) {
 		ROS_WARN("Unable to move to (x: %d, y: %d), not reachable", x, y);
 		return;
-	}
+	}else{
 
-    ROS_INFO("Moving to (x: %d, y: %d)", x, y);
+	
 
-	tf::Point pt((float)x * map_resolution, (float)y * map_resolution, 0.0);
+	tf::Point pt((float)x * map_resolution, (float)(size_y-y) * map_resolution, 0.0);
 	tf::Point transformed = map_transform * pt;
+
+    ROS_INFO("Moving to (x: %f, y: %f)", transformed.x(), transformed.y());
 
 	geometry_msgs::PoseStamped goal;
 	goal.header.frame_id = "map";
 	goal.pose.orientation.w = 1;
 	goal.pose.position.x = transformed.x();
-	goal.pose.position.y = -transformed.y();
+	goal.pose.position.y = transformed.y();
 	goal.header.stamp = ros::Time::now();
 
 	goal_pub.publish(goal);
+	
+	}
 }
 
 int main(int argc, char** argv) {
 
     ros::init(argc, argv, "map_goals");
     ros::NodeHandle n;
+    // nav_msgs::OccupancyGrid map;
 
     map_sub = n.subscribe("map", 10, &mapCallback);
 	goal_pub = n.advertise<geometry_msgs::PoseStamped>("goal", 10);

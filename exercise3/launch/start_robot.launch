@@ -5,7 +5,7 @@
   <include file="$(find turtlebot_bringup)/launch/minimal.launch">
   </include>
 
-  <param name="/turtlebot_node/odom_angular_scale_correction" value="0.991855" />
+  <param name="/turtlebot_node/odom_angular_scale_correction" value="0.9831717696509488" />
 
 </launch>
 

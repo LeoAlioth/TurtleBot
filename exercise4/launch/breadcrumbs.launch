@@ -1,0 +1,8 @@
+<launch>
+
+  <node pkg="exercise4" type="breadcrumbs" name="breadcrumbs" output="screen">
+    <param name="rate" type="double" value="1" />
+    <param name="markers_topic" type="string" value="robot_trail" />
+  </node>
+
+</launch>

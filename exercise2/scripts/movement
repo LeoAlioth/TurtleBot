@@ -19,7 +19,7 @@ def movement(step):
 
   #r = rospy.Rate(1)
 
-  execute_movement(pub, step)
+  execute_movement(pub, step.data)
   #r.sleep()
 
 
@@ -27,63 +27,64 @@ def execute_movement(pub, move):
 
   twist = Twist()
   if move == " ":
+    print(" ")
     twist.linear.x = 0.0
     twist.angular.z = 0.0
     pub.publish(twist)
-    time.sleep(0.5)
+    time.sleep(0.01)
   elif move == "w":
+    print("w")
     twist.linear.x = 1.0
     twist.angular.z = 0.0
     pub.publish(twist)
-    time.sleep(0.5)
+    time.sleep(0.01)
   elif move == "a":
     twist.linear.x = 0.0
-    twist.angular.z = -1.0
+    twist.angular.z = 1.0
     pub.publish(twist)
-    time.sleep(0.5)
+    time.sleep(0.01)
   elif move == "s":
     twist.linear.x = -1.0
     twist.angular.z = 0.0
     pub.publish(twist)
-    time.sleep(0.5)
+    time.sleep(0.01)
   elif move == "d":
     twist.linear.x = 0.0
-    twist.angular.z = 1.0
+    twist.angular.z = -1.0
     pub.publish(twist)
-    time.sleep(0.5)
+    time.sleep(0.01)
   elif move == "y":
     twist.linear.x = 1.0
     twist.angular.z = 0.0
     pub.publish(twist)
-    time.sleep(0.5)
+    time.sleep(0.01)
     twist.linear.x = 0.0
     twist.angular.z = 1.0
     pub.publish(twist)
-    time.sleep(0.5)
+    time.sleep(0.01)
     twist.linear.x = 1.0
     twist.angular.z = 0.0
     pub.publish(twist)
-    time.sleep(0.5)
+    time.sleep(0.01)
     twist.linear.x = 0.0
     twist.angular.z = 1.0
     pub.publish(twist)
-    time.sleep(0.5)
+    time.sleep(0.01)
   elif move == "x":
-    twist.linear.x = 0.0
-    twist.angular.z = 1.0
+    twist.linear.x = 2.0
+    twist.angular.z = 0.0
     pub.publish(twist)
-    time.sleep(2.0)
-    twist.linear.x = 0.0
-    twist.angular.z = -1.0
+    time.sleep(3.0)
+    twist.linear.x = 2.0
+    twist.angular.z = 0.0
     pub.publish(twist)
-    time.sleep(2.0)   
-  elif move == "x":
+  elif move == "c":
     for i in range(5):
-      twist.linear.x = 0.1
+      twist.linear.x = 0.5
       twist.angular.z = 1.0
       pub.publish(twist)
       time.sleep(0.3)
-      twist.linear.x = 0.1
+      twist.linear.x = 0.5
       twist.angular.z = -1.0
       pub.publish(twist)
       time.sleep(0.3)
