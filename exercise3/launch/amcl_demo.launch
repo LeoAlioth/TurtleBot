@@ -2,9 +2,9 @@
   <!-- 3D sensor -->
   <arg name="3d_sensor" default="$(env TURTLEBOT_3D_SENSOR)"/>  <!-- r200, kinect, asus_xtion_pro -->
   <include file="$(find turtlebot_bringup)/launch/3dsensor.launch">
-    <arg name="rgb_processing" value="false" />
-    <arg name="depth_registration" value="false" />
-    <arg name="depth_processing" value="false" />
+    <arg name="rgb_processing" value="true" />
+    <arg name="depth_registration" value="true" />
+    <arg name="depth_processing" value="true" />
     
     <!-- We must specify an absolute topic name because if not it will be prefixed by "$(arg camera)".
          Probably is a bug in the nodelet manager: https://github.com/ros/nodelet_core/issues/7 --> 
@@ -13,7 +13,7 @@
 
   <!-- Map server -->
   <arg name="map_file" default="$(env TURTLEBOT_MAP_FILE)"/>
-  <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
+  <node name="map_server" pkg="map_server" type="map_server" args="/home/team_beta/ROS/src/exercise3/map/map.yaml" />
 
   <!-- AMCL -->
   <arg name="custom_amcl_launch_file" default="$(find turtlebot_navigation)/launch/includes/amcl/$(arg 3d_sensor)_amcl.launch.xml"/>

@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 																						//queue size is the second argument
 	//Loop at 1Hz until the node is shutdown.
 	ros::Rate rate(1);
-	std::int id = 0;
+	int id = 0;
 	while(ros::ok()){
 		//Create the message.
 		exercise1::Greeting msg;
