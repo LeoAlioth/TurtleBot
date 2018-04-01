@@ -2,16 +2,34 @@
 from __future__ import print_function
 from __future__ import division
 
-import sys
-import cv2
-import numpy as np
-
 import time
+
+import roslib
+# roslib.load_manifest('exercise4')
+import sys
+import rospy
+import cv2
+import tf
+import numpy as np
+import tf2_geometry_msgs
+import tf2_ros
+from sensor_msgs.msg import Image
+from geometry_msgs.msg import PointStamped, Vector3, Pose
+from cv_bridge import CvBridge, CvBridgeError
+from visualization_msgs.msg import Marker, MarkerArray
+from std_msgs.msg import ColorRGBA
+
+import roslib; roslib.load_manifest('visualization_marker_tutorials')
+from visualization_msgs.msg import Marker
+from visualization_msgs.msg import MarkerArray
+import rospy
+import math
 
 class The_Ring:
     def __init__(self):
         # image
         self.cv_image = None
+        self.original = None
         # found ellipses
         self.candidates = []
 
@@ -39,6 +57,43 @@ class The_Ring:
         self.tf_buf = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buf)
 
+        self.count = 0
+        self.MARKERS_MAX = 100
+
+    def publishMarkser(self):
+        marker = Marker()
+        marker.header.frame_id = "/neck"
+        marker.type = marker.SPHERE
+        marker.action = marker.ADD
+        marker.scale.x = 0.2
+        marker.scale.y = 0.2
+        marker.scale.z = 0.2
+        marker.color.a = 1.0
+        marker.color.r = 1.0
+        marker.color.g = 1.0
+        marker.color.b = 0.0
+        marker.pose.orientation.w = 1.0
+        marker.pose.position.x = math.cos(self.count / 50.0)
+        marker.pose.position.y = math.cos(self.count / 40.0) 
+        marker.pose.position.z = math.cos(self.count / 30.0) 
+
+        # We add the new marker to the MarkerArray, removing the oldest
+        # marker from it when necessary
+        if(self.count > self.MARKERS_MAX):
+           self.marker_array.markers.pop(0)
+
+        self.marker_array.markers.append(marker)
+
+        # Renumber the marker IDs
+        id = 0
+        for m in self.marker_array.markers:
+           m.id = id
+           id += 1
+
+        # Publish the MarkerArray
+        self.markers_pub.publish(self.marker_array)
+
+        self.count += 1
 
     def get_pose(self,e,dist):
         # Calculate the position of the detected ellipse
@@ -96,6 +151,7 @@ class The_Ring:
         except CvBridgeError as e:
             print(e)
 
+        self.original = self.cv_image
         # Set the dimensions of the image
         self.dims = self.cv_image.shape
 
@@ -124,8 +180,8 @@ class The_Ring:
         end = time.clock()
         print("time elapsed for calculation:", end - start)
         self.draw(self.candidates)
-        self.marker_array += self.candidates
-        self.markers_pub.publish(self.marker_array)
+        #self.marker_array += self.candidates
+        #self.markers_pub.publish(self.marker_array)
 
         # Example how to draw the contours
         # cv2.drawContours(img, contours, -1, (255, 0, 0), 3)
@@ -149,8 +205,8 @@ class The_Ring:
         ret, thresh = cv2.threshold(img, x, y, z)
         # Extract contours
         im2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        cv2.imshow("contours", im2)
-        cv2.waitKey(0)
+        #cv2.imshow("contours", im2)
+        #cv2.waitKey(0)
         return contours
 
     def calculate(self, contours):
@@ -306,6 +362,7 @@ class The_Ring:
 
         cv2.imshow("Image window", self.cv_image)
         cv2.waitKey(1)
+        self.candidates = []
 
 
     def depth_callback(self,data):
