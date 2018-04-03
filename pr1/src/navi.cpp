@@ -5,6 +5,9 @@
 #include <opencv2/core/core.hpp>
 #include <tf/transform_datatypes.h>
 
+#include <sound_play/sound_play.h>
+#include <unistd.h>
+
 
 typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
 
@@ -106,20 +109,29 @@ void walkPath(float points[][2], int len, MoveBaseClient &ac){
 }
 
 
+void say(String text){
+    ros::init(argc, argv, "sound_play_test");
+
+    sound_play::SoundClient sc;
+
+    sc.say(text);
+    sleepk(2,n);
+}
+
 
 
 int main(int argc, char** argv){
-	ros::init(argc, argv, "navi");
+    ros::init(argc, argv, "navi");
 
-	ros::NodeHandle n;
+    ros::NodeHandle n;
     //map_sub = n.subscribe("map", 10, &mapCallback);
-
-	//tell the action client that we want to spin a thread by default
-	MoveBaseClient ac("move_base", true);
-	//wait for the action server to come up
-	while(!ac.waitForServer(ros::Duration(5.0))){
-		ROS_INFO("Waiting for the move_base action server to come up");
- 	}
+    say("Hello testing");
+    //tell the action client that we want to spin a thread by default
+    MoveBaseClient ac("move_base", true);
+    //wait for the action server to come up
+    while(!ac.waitForServer(ros::Duration(5.0))){
+        ROS_INFO("Waiting for the move_base action server to come up");
+    }
     int len = 12;
     float points[len][2] = {
         {0, 0},
@@ -137,6 +149,6 @@ int main(int argc, char** argv){
     };
 
     walkPath(points, len, ac);
-	return 0;
+    return 0;
 }
 
