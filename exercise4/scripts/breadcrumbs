@@ -62,6 +62,7 @@ class Breadcrumbs():
 		self.trail = []
 
 		self.message_counter = 0
+		
 
 if __name__ == '__main__':
 

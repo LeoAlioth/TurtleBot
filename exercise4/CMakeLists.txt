@@ -23,3 +23,5 @@ catkin_package()
 catkin_install_python(PROGRAMS scripts/detect_rings DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 catkin_install_python(PROGRAMS scripts/breadcrumbs DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+catkin_install_python(PROGRAMS scripts/surv DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
