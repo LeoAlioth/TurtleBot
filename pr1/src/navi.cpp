@@ -7,6 +7,9 @@
 
 #include <sound_play/sound_play.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <string>
+
 
 
 typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
@@ -24,7 +27,8 @@ ros::Publisher goal_pub;
 ros::Subscriber map_sub;
 
 
-/*void mapCallback(const nav_msgs::OccupancyGridConstPtr &msg_map) {
+void mapCallback(const nav_msgs::OccupancyGridConstPtr &msg_map) {
+    cout << "mouse call back was called" << endl;
     size_x = msg_map->info.width;
     size_y = msg_map->info.height;
 
@@ -79,7 +83,7 @@ ros::Subscriber map_sub;
             }
         }
     }
-}*/
+}
 
 float transfx(int point){
     return point * map_resolution;
@@ -89,33 +93,65 @@ float transfy(int point){
     return point * -map_resolution;
 }
 
+
+
 void walkPath(float points[][2], int len, MoveBaseClient &ac){
-    for(int i = 0; i < len; i++){
-        cout << "point: " << points[i][0] << " " << points[i][1] << endl;
+    float quatw[6] = {0.866, 0.500, 0.000,-0.500, 0.500, 0.866};
+    float quatz[6] = {0.500, 0.866, 1.000, 0.866,-0.866,-0.500};
+    float pointx, pointy;
+    for(int i = 0; i < len; i++){        
+        pointx = points[i][0];
+        pointy = points[i][1];
+        //cout << "transformed point: " << transformed.x() << " " << transformed.y() << endl;
+        cout << "point: " << pointx << " " << pointy << endl;
         move_base_msgs::MoveBaseGoal goal;
-        goal.target_pose.header.frame_id = "base_link";
+        goal.target_pose.header.frame_id = "map";
         goal.target_pose.header.stamp = ros::Time::now();
-        goal.target_pose.pose.position.x = points[i][0];
-        goal.target_pose.pose.position.y = points[i][1];
+        //goal.target_pose.pose.position.x = transformed.x();
+        //goal.target_pose.pose.position.y = transformed.y();
+        goal.target_pose.pose.position.x = pointx;
+        goal.target_pose.pose.position.y = pointy;
         goal.target_pose.pose.orientation.w = 1.0;
-        ROS_INFO("Sending goal");
+        //ROS_INFO("Sending goal");
+        cout << "point: " << pointx << " " << pointy << endl;
         ac.sendGoal(goal);
         ac.waitForResult();
-        if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-            ROS_INFO("moved to next point");
-        else
-            ROS_INFO("The base failed to move");
+        if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED){
+            //ROS_INFO("moved to next point");
+        }
+        else{
+            //ROS_INFO("The base failed to move");
+        }
+
+        for(int j = 0 ; j < 6 ; j++){
+            //ROS_INFO("Sending rotation");
+            move_base_msgs::MoveBaseGoal goal1;
+            goal1.target_pose.header.frame_id = "map";
+            goal1.target_pose.header.stamp = ros::Time::now();
+            goal1.target_pose.pose.position.x = pointx;
+            goal1.target_pose.pose.position.y = pointy;
+            goal1.target_pose.pose.orientation.w = quatw[j];
+            goal1.target_pose.pose.orientation.z = quatz[j];
+            ac.sendGoal(goal1);
+            ac.waitForResult();
+            system("python /home/team_beta/ROS/src/pr1/src/original_detect_markers.py");
+            if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED){
+                //ROS_INFO("rotated");
+                cout <<"point: " << pointx << " " << pointy << "     rotated: " << j << endl;
+            }
+            else{
+                ROS_INFO("failed to rotate");
+            }
+        }
     }
 }
 
 
 void say(String text){
-    ros::init(argc, argv, "sound_play_test");
 
     sound_play::SoundClient sc;
 
     sc.say(text);
-    sleepk(2,n);
 }
 
 
@@ -124,8 +160,8 @@ int main(int argc, char** argv){
     ros::init(argc, argv, "navi");
 
     ros::NodeHandle n;
-    //map_sub = n.subscribe("map", 10, &mapCallback);
-    say("Hello testing");
+    map_sub = n.subscribe("map", 10, &mapCallback);
+    //say("Hello testing");
     //tell the action client that we want to spin a thread by default
     MoveBaseClient ac("move_base", true);
     //wait for the action server to come up
@@ -147,6 +183,10 @@ int main(int argc, char** argv){
         {1.46, 0.23},
         {0.85, 0.27}
     };
+    while(ros::ok()){
+        ros::spinOnce();
+        walkPath(points, len, ac);
+    }
 
     walkPath(points, len, ac);
     return 0;
