@@ -1,0 +1,8 @@
+<launch>
+
+  <node pkg="pr1" type="navi" name="nabvi" output="screen">
+      #<remap from="goal" to="/move_base_simple/goal" />
+  </node>
+
+</launch>
+
