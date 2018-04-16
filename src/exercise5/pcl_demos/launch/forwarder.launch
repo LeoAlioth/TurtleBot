@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>
+
+    <node pkg="pcl_demos" type="cloud_forwarder" name="voxelgrid" output="screen">
+
+        <remap from="input" to="/camera/depth_registered/points"/>
+        <remap from="output" to="/exercise6/forwarder"/>
+
+    </node>
+
+</launch>
