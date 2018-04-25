@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>
+
+    <node pkg="pcl_demos" type="find_plane" name="find_plane">
+
+        <remap from="input" to="/camera/depth_registered/points"/>
+        <remap from="/pcl_demos/find_plane" to="plane"/>
+
+    </node>
+
+</launch>

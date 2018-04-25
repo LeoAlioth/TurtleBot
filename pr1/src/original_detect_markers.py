@@ -20,6 +20,8 @@ from cv_bridge import CvBridge, CvBridgeError
 from visualization_msgs.msg import Marker, MarkerArray
 from std_msgs.msg import ColorRGBA
 
+from std_msgs.msg import String
+
 import roslib; roslib.load_manifest('visualization_marker_tutorials')
 from visualization_msgs.msg import Marker
 from visualization_msgs.msg import MarkerArray
@@ -59,6 +61,7 @@ class The_Ring:
 
         # Publiser for the visualization markers
         self.markers_pub = rospy.Publisher('markers', MarkerArray, queue_size=1000)
+        self.notifications_pub = rospy.Publisher('notifications', String, queue_size=1000)
 
         # Object we use for transforming between coordinate frames
         self.tf_buf = tf2_ros.Buffer()
@@ -70,19 +73,26 @@ class The_Ring:
         print("START!")
 
         # read all points from map, if there are 3 already, stop, you found all the circles
-        print("BEFORE READ",self.allPointsMap)
+        #print("BEFORE READ",self.allPointsMap)
+
         self.allPointsMap = self.readPoints("points.txt")
-        print("AFTER READ",self.allPointsMap)
-        if len(self.allPointsMap) == 3:
+        #print("AFTER READ",self.allPointsMap)
+        
+        '''print("allPointsMap: ")
+                                print(self.allPointsMap)
+                                print("Len:")
+                                print(len(self.allPointsMap))'''
+        
+        if len(self.allPointsMap) == 5:
             print("DONE, all circles found!")
-            print(self.allPointsMap)
-            print("exit")
-            # just publish markers
-            self.get_pose(0, 0, True)
-            self.deleteContent("points.txt")
-            # exit 
-            rospy.signal_shutdown("hehe")
-            sys.exit(0)
+            '''print(self.allPointsMap)
+                                                print("exit")
+                                                # just publish markers
+                                                self.get_pose(0, 0, True)
+                                                self.deleteContent("points.txt")
+                                                # exit 
+                                                rospy.signal_shutdown("hehe")
+                                                sys.exit(0)'''
 
     def deleteContent(self, file):
         with open(file, "w"):
@@ -102,8 +112,8 @@ class The_Ring:
         try:
             with open(file, "w") as f:  
             #f = open(file, "r")
-                for i in range(len(self.allPointsMap)):
-                    x, y, z = self.allPointsMap[i]
+                for x, y, z in self.allPointsMap:
+                    print("Writing {:f} {:f} {:f}".format(x, y, z))
                     if len(self.allPointsMap) >= 1:
                         f.write("")
                     f.write("{} {} {}".format(x, y, z).strip() + "\n")
@@ -127,11 +137,12 @@ class The_Ring:
             with open(file) as f: 
             #f = open(file, "r")
                 data = f.readlines()
-                print(data)
+                #print(data)
             #print("data",data)
             for i in range(len(data)):
                 line = data[i].strip("\n").split(" ")
                 #print("line",line)
+                print("reading:{:f} {:f} {:f}".format(float(line[0]), float(line[1]), float(line[2])))
                 seznam.append((float(line[0]), float(line[1]), float(line[2])))
 
 
@@ -224,12 +235,7 @@ class The_Ring:
 
     def get_pose(self,e,dist,publish=False):
         # Calculate the position of the detected ellipse
-        if publish:
-            self.markers_pub.publish(self.marker_array)
-            return True
-
         k_f = 525 # kinect focal length in pixels
-
         elipse_x = self.dims[1] / 2 - e[0][0]
         elipse_y = self.dims[0] / 2 - e[0][1]
 
@@ -263,13 +269,13 @@ class The_Ring:
             return False
 
 
-        print("publish points - markers")
+        
         self.allPointsMap.append((pose.position.x, pose.position.y, pose.position.z))
         self.writePoints("points.txt")
 
 
         # Create a marker used for visualization
-        self.marker_num += 1
+        '''self.marker_num += 1
         marker = Marker()
         marker.header.stamp = point_world.header.stamp
         marker.header.frame_id = point_world.header.frame_id
@@ -281,9 +287,35 @@ class The_Ring:
         marker.id = self.marker_num
         marker.scale = Vector3(0.1, 0.1, 0.1)
         marker.color = ColorRGBA(0, 1, 0, 1)
-        self.marker_array.markers.append(marker)
+        self.marker_array.markers.append(marker)'''
 
-        self.markers_pub.publish(self.marker_array)
+        self.marker_array = MarkerArray()
+
+        m_id = 1
+        for mark in self.allPointsMap:
+            self.marker_num += 1
+            marker = Marker()
+            marker.header.stamp = point_world.header.stamp
+            marker.header.frame_id = point_world.header.frame_id
+            marker.type = Marker.CUBE
+            marker.action = Marker.ADD
+            marker.frame_locked = False
+            marker.lifetime = rospy.Duration.from_sec(600)
+            marker.id = m_id
+            m_id += 1 
+            marker.scale = Vector3(0.1, 0.1, 0.1)
+            marker.color = ColorRGBA(0, 1, 0, 1)
+            pose = Pose()
+            pose.position.x = mark[0]
+            pose.position.y = mark[1]
+            pose.position.z = mark[2]
+            marker.pose = pose
+            self.marker_array.markers.append(marker)
+
+        self.notifications_pub.publish("FOUND CIRCLE")
+        
+        if publish:
+            self.markers_pub.publish(self.marker_array)
 
         return True
 
@@ -608,7 +640,7 @@ class The_Ring:
             #print("[FOUND]","CORD", e1[0][0], e1[0][1], "AND", e2[0][0], e2[0][1])
             self.play_sound()
             print("found")
-            if len(self.allPointsMap) == 3:
+            if len(self.allPointsMap) == 5:
                 print("DONE, all circles found!")
                 print(self.allPointsMap)
                 print("exit")

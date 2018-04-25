@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>
+
+    <node pkg="pcl_demos" type="planes" name="planes">
+
+        <remap from="input" to="/camera/depth_registered/points"/>
+        <remap from="planes" to="/pcl_demos/planes"/>
+
+    </node>
+
+</launch>
