@@ -43,7 +43,9 @@ class The_Ring:
         # all points in map(rviz)
         self.allPointsMap = []
 
-        rospy.init_node('image_converter', anonymous=True)
+        #rospy.init_node('image_converter', anonymous=True)
+        rospy.init_node("circle_detect", anonymous=True)
+
 
         # An object we use for converting images between ROS format and OpenCV format
         self.bridge = CvBridge()
@@ -312,7 +314,6 @@ class The_Ring:
             marker.pose = pose
             self.marker_array.markers.append(marker)
 
-        self.notifications_pub.publish("FOUND CIRCLE")
         
         if publish:
             self.markers_pub.publish(self.marker_array)
@@ -372,6 +373,7 @@ class The_Ring:
                     wrong.append(i)
                     wrong.append(j)
                     break
+        #print("Candidates filtered, only real circles left.")
         return realCandidates
 
     def image_callback(self,data):
@@ -558,6 +560,7 @@ class The_Ring:
                     # save coordinates of good circles
                     candidates.append((e1, e2))
 
+
                     #    i += 1
                     #ratio1 = e1[1][0] / e2[1][0] if e2[1][0] != 0 else e2[1][0] / e1[1][0]
                     #ratio2 = e1[1][1] / e2[1][1] if e2[1][1] != 0 else e2[1][1] / e1[1][1]
@@ -638,6 +641,9 @@ class The_Ring:
             if not pp:
                 continue # go to next candidate
             #print("[FOUND]","CORD", e1[0][0], e1[0][1], "AND", e2[0][0], e2[0][1])
+
+            self.notifications_pub.publish("FOUND CIRCLE")
+
             self.play_sound()
             print("found")
             if len(self.allPointsMap) == 5:

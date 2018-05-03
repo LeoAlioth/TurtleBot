@@ -3,6 +3,6 @@
 		<param name="dev_i2c" type="string" value="/dev/i2c-1"/>
 		<param name="prefix" type="string" value="$(find openservorobot)/res/" />
 		<!--This is the  only  parameter  you  need to  change-->
-		<param name="cal_yaml" type="string" value="calibration_8.yaml" />
+		<param name="cal_yaml" type="string" value="calibration_2.yaml" />
 	</node>
 </launch>

@@ -1,7 +1,7 @@
 <launch>
 
 	<node pkg="pr1" type="navi" name="navi" output="screen">
-		#<remap from="goal" to="/move_base_simple/goal" />
+		<remap from="goal" to="/move_base_simple/goal" />
 	</node>
 
 	<node pkg="pr1" type="circle_detect.py" name="circle_detect" output="screen">
@@ -9,12 +9,8 @@
 
 	<include file="$(find sound_play)/soundplay_node.launch"></include>
 
-	<node pkg="openservorobot" type="openservorobot_node" name="openservorobot_node" output="screen">
-		<param name="dev_i2c" type="string" value="/dev/i2c−1"/>
-		<param name="prefix" type="string" value="$(find openservorobot)/res/" />
-		<!--This is the  only  parameter  you  need to  change-->
-		<param name="cal_yaml" type="string" value="calibration_8.yaml" />
-	</node>
+	<include file="$(find openservorobot)/launch/manipulator.launch"></include>
+
 
 </launch>
 
