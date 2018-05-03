@@ -1,0 +1,8 @@
+<launch>
+
+  <node pkg="exercise3" type="map_goals" name="map_goals" output="screen">
+      <remap from="goal" to="/move_base_simple/goal" />
+  </node>
+
+</launch>
+
