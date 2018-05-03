@@ -1,4 +1,0 @@
-<launch>
-	<node pkg="pr1" type="control_manipulator" name="control_manipulator" output="screen">
-	</node>
-</launch>
