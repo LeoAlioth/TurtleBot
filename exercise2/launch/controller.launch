@@ -1,8 +1,0 @@
-<launch>
-
-  <node pkg="exercise2" type="controller" name="controller"  output="screen">
-    <remap from="move_type" to="move_type" />
-  </node>
-
-</launch>
-

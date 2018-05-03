@@ -1,8 +1,0 @@
-<launch>
-
-  <node pkg="exercise3" type="surveliance" name="surveliance" output="screen">
-      <remap from="goal" to="/move_base_simple/goal" />
-  </node>
-
-</launch>
-
