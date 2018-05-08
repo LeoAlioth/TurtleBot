@@ -75,7 +75,7 @@ class RobotArm:
 
 	def position_callback(self, data):
 		print "Got command to set robot position:", data.data
-		self.position_id = data.data
+		self.position_id = int(data.data)
 		self.update_position = True
 		
 	def move_arm(self):

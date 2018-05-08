@@ -17,15 +17,39 @@
 #include "tf2_ros/transform_listener.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "geometry_msgs/PointStamped.h"
+#include <string>
+#include "std_msgs/String.h"
+ #include <sstream>
 
 ros::Publisher pubx;
 ros::Publisher puby;
 ros::Publisher pubm;
+ros::Publisher pustr;
 
 tf2_ros::Buffer tf2_buffer;
 
 typedef pcl::PointXYZ PointT;
 
+using namespace std;
+
+float calculateDistance(float x_cylinder, float y_cylinder, float x_robot, float y_robot)
+{
+  return sqrt(pow((x_cylinder - x_robot),2) + pow((y_cylinder - y_robot), 2));
+}
+
+float calculateAngle(float x_cylinder, float y_cylinder, float x_robot, float y_robot)
+{
+  return atan2(y_cylinder - y_robot, x_cylinder - x_robot);
+}
+
+// insert distance = distane - 0.5m
+// distance = 0.5
+string calculatePoint(float distance, float angle, float x_robot, float y_robot)
+{
+  float X = distance * cos(angle) + x_robot;
+  float Y = distance * sin(angle) + y_robot;
+  return "" + to_string(X) + "|" + to_string(Y);
+}
 
 void 
 cloud_cb (const pcl::PCLPointCloud2ConstPtr& cloud_blob)
@@ -172,6 +196,9 @@ cloud_cb (const pcl::PCLPointCloud2ConstPtr& cloud_blob)
 
 	      std::cerr << "point_map: " << point_map.point.x << " " <<  point_map.point.y << " " <<  point_map.point.z << std::endl;
 
+//        float angle = calculateAngle(point_map.point.x, point_map.point.y, point_camera.point.x, point_camera.point.y);
+//        string coordinates_to_go = calculatePoint(0.5, angle, point.camera.point.x, point.camera.point.y);
+
 	  	  marker.header.frame_id = "map";
           marker.header.stamp = ros::Time::now();
 
@@ -202,6 +229,14 @@ cloud_cb (const pcl::PCLPointCloud2ConstPtr& cloud_blob)
 
 	      pubm.publish (marker);
 
+        // publish string msg object
+        std_msgs::String msg_coordinates_to_go;
+        std::stringstream ss_coordinates_to_go;
+        ss_coordinates_to_go << "hello friends";
+        msg_coordinates_to_go.data = ss_coordinates_to_go.c_sstr();
+        pustr.publish(msg_coordinates_to_go);
+        cout << "published" << endl;
+
 	      pcl::PCLPointCloud2 outcloud_cylinder;
           pcl::toPCLPointCloud2 (*cloud_cylinder, outcloud_cylinder);
           puby.publish (outcloud_cylinder);
@@ -228,6 +263,7 @@ main (int argc, char** argv)
   puby = nh.advertise<pcl::PCLPointCloud2> ("cylinder", 1);
 
   pubm = nh.advertise<visualization_msgs::Marker>("detected_cylinder",1);
+  pustr = nh.advertise<std_msgs::String>("notifications",100);
 
   // Spin
   ros::spin ();

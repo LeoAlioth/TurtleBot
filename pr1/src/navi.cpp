@@ -10,6 +10,10 @@
 #include <stdlib.h>
 #include <string>
 #include "std_msgs/String.h"
+#include <std_msgs/Int8.h>
+#include "vector"
+#include <boost/algorithm/string.hpp>
+
 
 
 
@@ -25,7 +29,9 @@ int size_x;
 tf::Transform map_transform;
 
 ros::Publisher goal_pub;
+ros::Publisher arm_pub;
 ros::Subscriber map_sub;
+ros::Subscriber notifications_sub;
 
 
 void mapCallback(const nav_msgs::OccupancyGridConstPtr &msg_map) {
@@ -86,17 +92,12 @@ void mapCallback(const nav_msgs::OccupancyGridConstPtr &msg_map) {
     }
 }
 
-float transfx(int point){
-    return point * map_resolution;
-}
 
-float transfy(int point){
-    return point * -map_resolution;
-}
-
-
-
-void walkPath(move_base_msgs::MoveBaseGoal goal, MoveBaseClient &ac){      
+void walkTo(move_base_msgs::MoveBaseGoal goal){ 
+    MoveBaseClient ac("move_base", true);     
+    while(!ac.waitForServer(ros::Duration(5.0))){
+        ROS_INFO("Waiting for the move_base action server to come up");
+    }
     ac.sendGoal(goal);
     ac.waitForResult();
     //system("python /home/team_beta/ROS/src/pr1/src/original_detect_markers.py");
@@ -140,7 +141,20 @@ move_base_msgs::MoveBaseGoal get_next_pos(int &point, int &rot){
         point = (point + 1) % len;
     }
     return goal1;
+}
 
+move_base_msgs::MoveBaseGoal get_baseGoalMessage(int x, int y, int rot){
+    float quatw[6] = {0.866, 0.500, 0.000,-0.500, 0.500, 0.866};
+    float quatz[6] = {0.500, 0.866, 1.000, 0.866,-0.866,-0.500};
+
+    move_base_msgs::MoveBaseGoal goal1;
+    goal1.target_pose.header.frame_id = "map";
+    goal1.target_pose.header.stamp = ros::Time::now();
+    goal1.target_pose.pose.position.x = x;
+    goal1.target_pose.pose.position.y = y;
+    goal1.target_pose.pose.orientation.w = quatw[rot];
+    goal1.target_pose.pose.orientation.z = quatz[rot];
+    return goal1;
 }
 
 
@@ -151,26 +165,57 @@ void say(String text){
     sc.say(text);
 }
 
-void approach_circle(const std_msgs::String::ConstPtr& message){
-    if(message->data.c_str() == "FOUND CIRCLE"){
-        cout << "NAVI: " << message->data.c_str() << endl;
-    }
-}
+void parse_notification(const std_msgs::String::ConstPtr& message){
 
+    std::vector<std::string> content;
+    boost::split(content, message->data, boost::is_any_of("\t "));
+
+    float Xpos, Ypos;
+    int rot, coin;
+
+    if(content[0] == "FOUND_CIRCLE"){
+        Xpos = std::stof(content[1]);
+        Ypos = std::stof(content[2]);
+        rot = std::stof(content[3]);
+        cout << "NAVI: " << "FOUND_CIRCLE: "  << "X: "<< Xpos << " Y: " << Ypos << " ROTATION: " << rot <<  endl;
+        move_base_msgs::MoveBaseGoal goal;
+        goal = get_baseGoalMessage(Xpos, Ypos, rot);
+        walkTo(goal);
+    }
+
+    if(content[0] == "FOUND_CYLINDER"){
+        Xpos = std::stof(content[1]);
+        Ypos = std::stof(content[2]);
+        rot = std::stof(content[3]);
+        coin = std::stoi(content[4]);
+        cout << "NAVI: " << "FOUND_CYLINDER: "  << "X: "<< Xpos << " Y: " << Ypos << " ROTATION: " << rot << " COIN: " << coin << endl;
+        move_base_msgs::MoveBaseGoal goal;
+        goal = get_baseGoalMessage(Xpos, Ypos, rot);
+        walkTo(goal);
+        cout << "starting message" << endl;
+        std_msgs::Int8 msg;
+        cout << "blank message" << endl;
+        msg.data = coin;
+        cout << "sending message" << endl;
+        arm_pub.publish(msg);
+    }
+
+
+}
 
 
 int main(int argc, char** argv){
     ros::init(argc, argv, "navi");
     ros::NodeHandle n;
     map_sub = n.subscribe("map", 10, &mapCallback);
-    map_sub = n.subscribe("notifications", 100, approach_circle);
+    arm_pub = n.advertise<std_msgs::Int8>("set_manipulator_position", 100);
+
+    notifications_sub = n.subscribe("notifications", 100, parse_notification);
     //say("Hello testing");
     //tell the action client that we want to spin a thread by default
-    MoveBaseClient ac("move_base", true);
+    
     //wait for the action server to come up
-    while(!ac.waitForServer(ros::Duration(5.0))){
-        ROS_INFO("Waiting for the move_base action server to come up");
-    }
+    
     
 
     system("python /home/team_beta/ROS/src/pr1/src/delete_markers.py");
@@ -178,9 +223,9 @@ int main(int argc, char** argv){
     move_base_msgs::MoveBaseGoal goal;
 
     while(ros::ok()){
-        cout << "rot: " << rot  << "point: " << point << endl;
-        goal = get_next_pos(point, rot);
-        walkPath(goal, ac);
+        //cout << "rot: " << rot  << "point: " << point << endl;
+        //goal = get_next_pos(point, rot);
+        //walkTo(goal);
         ros::spinOnce();
     }
     return 0;

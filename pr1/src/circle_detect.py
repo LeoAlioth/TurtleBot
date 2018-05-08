@@ -642,7 +642,7 @@ class The_Ring:
                 continue # go to next candidate
             #print("[FOUND]","CORD", e1[0][0], e1[0][1], "AND", e2[0][0], e2[0][1])
 
-            self.notifications_pub.publish("FOUND CIRCLE")
+            self.notifications_pub.publish("FOUND_CIRCLE")
 
             self.play_sound()
             print("found")
