@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 
-    <node pkg="pcl_demos" type="cylinder_segmentation" name="cylinder_segmentation">s
+    <node pkg="pr1" type="cylinder_detect" name="cylinder_detect">s
         <remap from="input" to="/camera/depth_registered/points"/>
     </node>
 

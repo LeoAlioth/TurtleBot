@@ -130,7 +130,7 @@ move_base_msgs::MoveBaseGoal get_next_pos(int &point, int &rot){
     int len = 12;
     float points[len][2] = {
         {0, 0},
-        {0.47, 0.41},
+        {0.44, 0.41},
         {0.26, 1.13},
         {0.72, 1.80},
         {0.35, 2.82},
@@ -188,7 +188,6 @@ void parse_notification(const std_msgs::String::ConstPtr& message){
     int coin;
 
     if(content[0] == "FOUND_CIRCLE"){
-        say("found circle");
         Xpos = std::stof(content[1]);
         Ypos = std::stof(content[2]);
         rot = std::stof(content[3]);
@@ -199,7 +198,6 @@ void parse_notification(const std_msgs::String::ConstPtr& message){
     }
 
     if(content[0] == "FOUND_CYLINDER"){
-        say("found cylinder");
         Xpos = std::stof(content[1]);
         Ypos = std::stof(content[2]);
         rot = std::stof(content[3]);
@@ -213,9 +211,8 @@ void parse_notification(const std_msgs::String::ConstPtr& message){
         cout << "blank message" << endl;
         msg.data = coin;
         cout << "sending message" << endl;
-        say("dropping coin");
         arm_pub.publish(msg);
-        ros::Duration(10).sleep();
+        ros::Duration(7).sleep();
 
     }
 
@@ -243,9 +240,6 @@ int main(int argc, char** argv){
     move_base_msgs::MoveBaseGoal goal;
 
     float tmpx = -1;
-    //ros::Duration(5).sleep();
-    //cout << "sending message" << endl;
-    //publishMessageToGoalPub("arrived_to "+ to_string(goal.target_pose.pose.position.x) + " " + to_string(goal.target_pose.pose.position.y));
 
     while(ros::ok()){
         cout << "rot: " << rot  << "point: " << point << endl;

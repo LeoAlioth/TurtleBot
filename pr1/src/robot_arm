@@ -13,6 +13,7 @@ class RobotArm:
 		self.limits = dict()
 		rospy.init_node('robot_arm')
 
+
 		self.reached_goal = False;
 
 		self.init = True
@@ -36,12 +37,27 @@ class RobotArm:
 		self.position_id = None
 		
 		# A list of lists for robot joint configurations
-		self.coin_positions=[[0.09, 0.55, 0.25, 0.1, 0.65],
+		self.coin_positions=[[0.09, 0.55, 0.18, 0.2, 0.5],
+							[0.22, 0.55, 0.18, 0.2, 0.5],
+							[0.34, 0.55, 0.18, 0.2, 0.5]]
+
+
+		'''					roka 2
+							[[0.09, 0.55, 0.25, 0.1, 0.65],
 							[0.22, 0.55, 0.25, 0.1, 0.65],
 							[0.33, 0.55, 0.25, 0.1, 0.65]]
 
-		self.rest_position=[0.2, 0.4, 0.5, 0.1, 0.65] 
-		self.drop_position=[1.0, 0.3, 0.5, 0.5, 0.65]
+							roka 8
+							[[0.09, 0.55, 0.18, 0.2, 0.5],
+							[0.22, 0.55, 0.18, 0.2, 0.5],
+							[0.34, 0.55, 0.18, 0.2, 0.5]]
+
+							[0.2, 0.4, 0.5, 0.1, 0.5] 
+							[1.0, 0.3, 0.5, 0.5, 0.5]'''
+		
+
+		self.rest_position=[0.2, 0.4, 0.5, 0.1, 0.5, 0] 
+		self.drop_position=[1.0, 0.3, 0.5, 0.5, 0.5]
 		
 
 	def state_callback(self, data):
@@ -102,10 +118,17 @@ class RobotArm:
 		time.sleep(1)
 		
 		#grab
-		self.move_joint(5, self.limits[5][1],1)
+		self.move_joint(5, 1,1)
 
 		time.sleep(1.5)
 
+		#get coin out 
+		self.move_joint(4, 0.6, 1)
+		time.sleep(0.5)
+		self.move_joint(3, 0.6, 1)
+
+		time.sleep(0.1)
+		
 		#lift coin 
 		self.move_joint(1, 0.7, 1)
 
@@ -118,7 +141,7 @@ class RobotArm:
 		time.sleep(2)
 
 		#open grabber
-		self.move_joint(5, self.limits[5][0], 1)
+		self.move_joint(5, 0, 1)
 
 		time.sleep(1)
 

@@ -3,7 +3,7 @@
 #include <math.h>
 #include <visualization_msgs/Marker.h>
 #include <sensor_msgs/PointCloud2.h>
-#include <pcl_conversions/pcl_conversions.h>
+//#include <pcl_conversions/pcl_conversions.h>
 #include <pcl/ModelCoefficients.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
@@ -19,7 +19,8 @@
 #include "geometry_msgs/PointStamped.h"
 #include <string>
 #include "std_msgs/String.h"
- #include <sstream>
+#include <sstream>
+#include <sound_play/sound_play.h>
 
 ros::Publisher pubx;
 ros::Publisher puby;
@@ -154,52 +155,52 @@ cloud_cb (const pcl::PCLPointCloud2ConstPtr& cloud_blob)
     std::cerr << "Can't find the cylindrical component." << std::endl;
   else
   {
-	  std::cerr << "PointCloud representing the cylindrical component: " << cloud_cylinder->points.size () << " data points." << std::endl;
+    std::cerr << "PointCloud representing the cylindrical component: " << cloud_cylinder->points.size () << " data points." << std::endl;
           
           pcl::compute3DCentroid (*cloud_cylinder, centroid);
           std::cerr << "centroid of the cylindrical component: " << centroid[0] << " " <<  centroid[1] << " " <<   centroid[2] << " " <<   centroid[3] << std::endl;
 
-	  //Create a point in the "camera_rgb_optical_frame"
+    //Create a point in the "camera_rgb_optical_frame"
           geometry_msgs::PointStamped point_camera;
           geometry_msgs::PointStamped point_map;
-	      visualization_msgs::Marker marker;
+        visualization_msgs::Marker marker;
           geometry_msgs::TransformStamped tss;
           
           point_camera.header.frame_id = "camera_rgb_optical_frame";
           point_camera.header.stamp = ros::Time::now();
 
-	  	  point_map.header.frame_id = "map";
+        point_map.header.frame_id = "map";
           point_map.header.stamp = ros::Time::now();
 
-		  point_camera.point.x = centroid[0];
-		  point_camera.point.y = centroid[1];
-		  point_camera.point.z = centroid[2];
+      point_camera.point.x = centroid[0];
+      point_camera.point.y = centroid[1];
+      point_camera.point.z = centroid[2];
 
-	  try{
-		  time_test = ros::Time::now();
+    try{
+      time_test = ros::Time::now();
 
-		  std::cerr << time_rec << std::endl;
-		  std::cerr << time_test << std::endl;
-  	      tss = tf2_buffer.lookupTransform("map","camera_rgb_optical_frame", time_rec);
+      std::cerr << time_rec << std::endl;
+      std::cerr << time_test << std::endl;
+          tss = tf2_buffer.lookupTransform("map","camera_rgb_optical_frame", time_rec);
           //tf2_buffer.transform(point_camera, point_map, "map", ros::Duration(2));
-	  }
+    }
           catch (tf2::TransformException &ex)
-	  {
-	       ROS_WARN("Transform warning: %s\n", ex.what());
-	  }
+    {
+         ROS_WARN("Transform warning: %s\n", ex.what());
+    }
 
           //std::cerr << tss ;
 
           tf2::doTransform(point_camera, point_map, tss);
 
-	      std::cerr << "point_camera: " << point_camera.point.x << " " <<  point_camera.point.y << " " <<  point_camera.point.z << std::endl;
+        std::cerr << "point_camera: " << point_camera.point.x << " " <<  point_camera.point.y << " " <<  point_camera.point.z << std::endl;
 
-	      std::cerr << "point_map: " << point_map.point.x << " " <<  point_map.point.y << " " <<  point_map.point.z << std::endl;
+        std::cerr << "point_map: " << point_map.point.x << " " <<  point_map.point.y << " " <<  point_map.point.z << std::endl;
 
 //        float angle = calculateAngle(point_map.point.x, point_map.point.y, point_camera.point.x, point_camera.point.y);
 //        string coordinates_to_go = calculatePoint(0.5, angle, point.camera.point.x, point.camera.point.y);
 
-	  	  marker.header.frame_id = "map";
+        marker.header.frame_id = "map";
           marker.header.stamp = ros::Time::now();
 
           marker.ns = "cylinder";
@@ -212,32 +213,46 @@ cloud_cb (const pcl::PCLPointCloud2ConstPtr& cloud_blob)
           marker.pose.position.y = point_map.point.y;
           marker.pose.position.z = point_map.point.z;
           marker.pose.orientation.x = 0.0;
-	      marker.pose.orientation.y = 0.0;
+        marker.pose.orientation.y = 0.0;
           marker.pose.orientation.z = 0.0;
           marker.pose.orientation.w = 1.0;
 
           marker.scale.x = 0.1;
-	      marker.scale.y = 0.1;
-	      marker.scale.z = 0.1;
+        marker.scale.y = 0.1;
+        marker.scale.z = 0.1;
 
           marker.color.r=0.0f;
           marker.color.g=1.0f;
           marker.color.b=0.0f;
           marker.color.a=1.0f;
 
-	      marker.lifetime = ros::Duration();
+        marker.lifetime = ros::Duration();
+        std::cer << "PUBLISHED PUBLISHED PUBLISHED" << endl;
+        pubm.publish (marker);
+        //Create the message.
+        std_msgs::String msg;
 
-	      pubm.publish (marker);
+        std::stringstream ss;
+
+        ss << "hello publishing world " << count;
+        msg.data=ss.str();
+
+        //Publish the message
+        pustr.publish(msg);
+
+        //Send a message to rosout
+        ROS_INFO("%s", msg.data.c_str());
 
         // publish string msg object
-        std_msgs::String msg_coordinates_to_go;
-        std::stringstream ss_coordinates_to_go;
-        ss_coordinates_to_go << "hello friends";
-        msg_coordinates_to_go.data = ss_coordinates_to_go.c_sstr();
-        pustr.publish(msg_coordinates_to_go);
+        //std_msgs::String msg_coordinates_to_go;
+        //std::stringstream ss_coordinates_to_go;
+        //ss_coordinates_to_go << "hello friends";
+        //msg_coordinates_to_go.data = "hello world";
+        //msg_coordinates_to_go.data = ss_coordinates_to_go.c_sstr();
+        //pustr.publish (msg_coordinates_to_go);
         cout << "published" << endl;
 
-	      pcl::PCLPointCloud2 outcloud_cylinder;
+        pcl::PCLPointCloud2 outcloud_cylinder;
           pcl::toPCLPointCloud2 (*cloud_cylinder, outcloud_cylinder);
           puby.publish (outcloud_cylinder);
 
@@ -262,8 +277,11 @@ main (int argc, char** argv)
   pubx = nh.advertise<pcl::PCLPointCloud2> ("planes", 1);
   puby = nh.advertise<pcl::PCLPointCloud2> ("cylinder", 1);
 
-  pubm = nh.advertise<visualization_msgs::Marker>("detected_cylinder",1);
+
+  //pubm = nh.advertise<visualization_msgs::Marker>("detected_cylinder",1);
   pustr = nh.advertise<std_msgs::String>("notifications",100);
+
+
 
   // Spin
   ros::spin ();

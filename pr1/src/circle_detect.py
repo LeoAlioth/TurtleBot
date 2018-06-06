@@ -32,6 +32,24 @@ import math
 from sound_play.msg import SoundRequest
 from sound_play.libsoundplay import SoundClient
 
+dictm = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250)
+
+# The object that we will pass to the markerDetect function
+params =  cv2.aruco.DetectorParameters_create()
+
+print(params.adaptiveThreshConstant) 
+print(params.adaptiveThreshWinSizeMax)
+print(params.adaptiveThreshWinSizeMin)
+print(params.minCornerDistanceRate)
+print(params.adaptiveThreshWinSizeStep)
+
+# To see description of the parameters
+# https://docs.opencv.org/3.3.1/d1/dcd/structcv_1_1aruco_1_1DetectorParameters.html
+
+# You can set these parameters to get better marker detections
+params.adaptiveThreshConstant = 25
+adaptiveThreshWinSizeStep = 2
+
 class The_Ring:
     def __init__(self):
         # image
@@ -46,7 +64,11 @@ class The_Ring:
         #rospy.init_node('image_converter', anonymous=True)
         rospy.init_node("circle_detect", anonymous=True)
 
+        #Kvadrati v kotih
+        self.dictm = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250)
+        self.params =  cv2.aruco.DetectorParameters_create() 
 
+        self.params.adaptiveThreshConstant = 25
         # An object we use for converting images between ROS format and OpenCV format
         self.bridge = CvBridge()
 
@@ -427,7 +449,8 @@ class The_Ring:
 
         end = time.clock()
         #print("time elapsed for calculation:", end - start)
-        self.draw(self.candidates)
+        #self.draw(self.candidates)
+        self.dasd(self.candidates)
         #self.marker_array += self.candidates
         #self.markers_pub.publish(self.marker_array)
 
@@ -436,7 +459,72 @@ class The_Ring:
 
     
 
+    def dasd(self, candidates):
+    	###########################################
+        #### THIS IS THE CODE THAT IT IS RELEVANT TO YOU
+        #### IT SHOULD BE INCLUDED IN YOUR OWN FUNCTION FOR RING DETECTION
+        ###########################################
+        
+        if len(candidates)==1:
+            print('Ring detected! (hopefully)')
+            corners, ids, rejected_corners = cv2.aruco.detectMarkers(cv_image,self.dictm,parameters=self.params)
+            
+            # Increase proportionally if you want a larger image
+            image_size=(351*2,248*2,3)
+            marker_side=50*2
 
+            img_out = np.zeros(image_size, np.uint8)
+            out_pts = np.array([[marker_side/2,img_out.shape[0]-marker_side/2],
+                                [img_out.shape[1]-marker_side/2,img_out.shape[0]-marker_side/2],
+                                [marker_side/2,marker_side/2],
+                                [img_out.shape[1]-marker_side/2,marker_side/2]])
+
+            src_points = np.zeros((4,2))
+            cens_mars = np.zeros((4,2))
+
+            if not ids is None:
+                if len(ids)==4:
+                    print('4 Markers detected')
+            
+                    for idx in ids:
+                        # Calculate the center point of all markers
+                        cors = np.squeeze(corners[idx[0]-1])
+                        cen_mar = np.mean(cors,axis=0)
+                        cens_mars[idx[0]-1]=cen_mar
+                        cen_point = np.mean(cens_mars,axis=0)
+                
+                    for coords in cens_mars:
+                        #  Map the correct source points
+                        if coords[0]<cen_point[0] and coords[1]<cen_point[1]:
+                            src_points[2]=coords
+                        elif coords[0]<cen_point[0] and coords[1]>cen_point[1]:
+                            src_points[0]=coords
+                        elif coords[0]>cen_point[0] and coords[1]<cen_point[1]:
+                            src_points[3]=coords
+                        else:
+                            src_points[1]=coords
+
+                    h, status = cv2.findHomography(src_points, out_pts)
+                    img_out = cv2.warpPerspective(cv_image, h, (img_out.shape[1],img_out.shape[0]))
+                    
+                    cv2.imshow('Warped image',img_out)
+                    cv2.waitKey(1)
+                else:
+                    print('The number of markers is not ok:',len(ids))
+            else:
+                 print('No markers found')
+            
+        elif len(candidates)==0:
+            print('No contours detected')
+        else:
+            print('Some contours detected, not sure if it is a ring',len(candidates))
+            for elps in candidates:
+                e1 = elps[0]
+                e2 = elps[0]
+                cv2.ellipse(cv_image,e1,(0,255,0),3)
+                cv2.ellipse(cv_image,e2,(0,255,0),3)
+            #cv2.imshow('Image',cv_image)
+            #cv2.waitKey(1)
 
     # returns center (x,y) of two elipses
     def getCenterOfElipses(self, e1, e2):
@@ -561,6 +649,7 @@ class The_Ring:
                     candidates.append((e1, e2))
 
 
+
                     #    i += 1
                     #ratio1 = e1[1][0] / e2[1][0] if e2[1][0] != 0 else e2[1][0] / e1[1][0]
                     #ratio2 = e1[1][1] / e2[1][1] if e2[1][1] != 0 else e2[1][1] / e1[1][1]
@@ -578,6 +667,7 @@ class The_Ring:
                     #    print("e2 {}".format(e2[j]), j)
 
                 #    candidates.append((e1, e2))
+
         return candidates
         #return (candidates, noncandidates)
 

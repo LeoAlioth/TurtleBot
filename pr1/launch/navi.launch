@@ -1,11 +1,15 @@
+<?xml version="1.0"?>
 <launch>
 
 	<node pkg="pr1" type="navi" name="navi" output="screen">
 		<remap from="goal" to="/move_base_simple/goal" />
 	</node>
 
-	<node pkg="pr1" type="circle_detect.py" name="circle_detect" output="screen">
-	</node>
+	
+
+	<include file="$(find pr1)/launch/find_cylinder.launch">
+		<remap from="normals_marker_array"  to="visualization_marker_array"/>
+    </include>
 
 
 </launch>

@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <launch>
 
     <!-- This is how to launch a launch file from inside another launch file -->
@@ -5,7 +6,7 @@
     <include file="$(find turtlebot_bringup)/launch/minimal.launch">
     </include>
 
-    <param name="/turtlebot_node/odom_angular_scale_correction" value="0.978901" />
+    <param name="/turtlebot_node/odom_angular_scale_correction" value="0.996801" />
 
     <include file="$(find pr1)/launch/amcl_demo.launch">
     </include>
@@ -13,6 +14,8 @@
     <include file="$(find sound_play)/soundplay_node.launch"></include>
 
     <include file="$(find openservorobot)/launch/manipulator.launch"></include>
+
+    <node pkg="pr1" type="robot_arm" name="robot_arm" output="screen"></node>
 
 </launch>
 

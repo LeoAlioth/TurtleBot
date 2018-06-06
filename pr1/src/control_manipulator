@@ -3,13 +3,19 @@
 import roslib
 #roslib.load_manifest('exercise6')
 import rospy
+import time
 
 from std_msgs.msg import Int8
 from openservorobot.msg import MoveJoint, ManipulatorStateM, ManipulatorDescriptionM, JointStateM, JointDescriptionM
 
 class RobotArm:
 	def __init__(self):
+		self.limits = dict()
 		rospy.init_node('robot_arm')
+
+		self.reached_goal = False;
+
+		self.init = True
 
 		# A publisher for setting different joint angles of the robot arm
 		self.pub_joint = rospy.Publisher("openservorobot/move_joint_to", MoveJoint, queue_size=1000)
@@ -18,7 +24,7 @@ class RobotArm:
 		self.sub_state = rospy.Subscriber("openservorobot/manipulator_state", ManipulatorStateM, self.state_callback)
 		
 		# A subscriber for the current state of the robot
-		#self.sub_desc = rospy.Subscriber("openservorobot/manipulator_description", ManipulatorDescriptionM, self.desc_callback)
+		self.sub_desc = rospy.Subscriber("openservorobot/manipulator_description", ManipulatorDescriptionM, self.desc_callback)
 
 		# A subscriber for the wanted position of the robot
 		self.sub_command = rospy.Subscriber("set_manipulator_position", Int8, self.position_callback)
@@ -30,22 +36,55 @@ class RobotArm:
 		self.position_id = None
 		
 		# A list of lists for robot joint configurations
-		self.positions=[[0.5, 1, 0.2, 1.5, 0.4, 0],
-					  [1, 0.5, 0.1, 0.5, 1.4, 0],
-					  [0.2, 1.5, 0.4, 1.5, 0.4, 1]]
+		self.coin_positions=[[0.09, 0.55, 0.13, 0.2, 0.5],
+							[0.22, 0.55, 0.13, 0.2, 0.5],
+							[0.34, 0.55, 0.13, 0.2, 0.5]]
+
+		'''					roka 2
+							[[0.09, 0.55, 0.25, 0.1, 0.65],
+							[0.22, 0.55, 0.25, 0.1, 0.65],
+							[0.33, 0.55, 0.25, 0.1, 0.65]]
+
+							roka 8 - thorin
+							[[0.09, 0.55, 0.18, 0.2, 0.5],
+							[0.22, 0.55, 0.18, 0.2, 0.5],
+							[0.34, 0.55, 0.18, 0.2, 0.5]]
+
+							[0.2, 0.4, 0.5, 0.1, 0.5] 
+							[1.0, 0.3, 0.5, 0.5, 0.5]
+
+							roka 7
+							[[0.09, 0.55, 0.18, 0.2, 0.5],
+							[0.22, 0.55, 0.18, 0.2, 0.5],
+							[0.34, 0.55, 0.18, 0.2, 0.5]]
+
+							[0.2, 0.4, 0.5, 0.1, 0.5] 
+							[1.0, 0.3, 0.5, 0.5, 0.5]'''
+		
+
+		self.rest_position=[0.2, 0.4, 0.5, 0.1, 0.5] 
+		self.drop_position=[1.0, 0.3, 0.5, 0.5, 0.5]
 		
 
 	def state_callback(self, data):
+		self.reached_goal = True
 		if self.update_position == True:
 			for n,joint in enumerate(data.joints):
-				print "Joint", n, "is in position", joint.position, ", goal is", joint.goal
+				#print "Joint", n, "is in position", joint.position, ", goal is", joint.goal
+				if abs(joint.position-joint.goal) >= 0.01 :
+					if abs(joint.position - self.limits[n][0]) < 0.01 or abs(joint.position - self.limits[n][1]) < 0.01:
+						self.reached_goal = False
+						print "moving"
 		#print data
 		
 	def desc_callback(self, data):
-		for n,joint in enumerate(data.joints):
-			print "For joint", n, "min pos is", joint.dh_min, ", max pos is", joint.dh_max
-		#print data
-		
+		if self.init:
+			for n,joint in enumerate(data.joints):
+				print "For joint", n, "min pos is", joint.dh_min, ", max pos is", joint.dh_max
+				self.limits[n] = (joint.dh_min, joint.dh_max)
+			#print data
+			print self.limits[0]
+			self.init = False
 	def get_desc(self):
 		try:
 			desc = rospy.wait_for_message("openservorobot/manipulator_description", ManipulatorDescriptionM)
@@ -58,35 +97,95 @@ class RobotArm:
 
 	def position_callback(self, data):
 		print "Got command to set robot position:", data.data
-		self.position_id = data.data
+		self.position_id = int(data.data)
 		self.update_position = True
 		
 	def move_arm(self):
 		# This function moves all the robot joints
 
-		positions = self.positions[self.position_id]
+
+		positions = self.coin_positions[self.position_id]
+
+		#open grabber
+		self.move_joint(5, self.limits[5][0], 1)	
+
+		#get hand to resting position
+		for n in range(len(self.rest_position)):
+			self.move_joint(n, self.rest_position[n], 1)
+
+		time.sleep(1)
+
+		positions = self.coin_positions[self.position_id]
 		
+		#get hand to correct position
 		for n in range(len(positions)):
 			self.move_joint(n, positions[n], 1)
+
+		time.sleep(1)
 		
+		#grab
+		self.move_joint(5, 1,1)
+
+		time.sleep(1.5)
+
+		#get coin out 
+		self.move_joint(4, 0.55x, 1)
+		time.sleep(0.5)
+		self.move_joint(3, 0.6, 1)
+
+		time.sleep(0.1)
+		
+		#lift coin 
+		self.move_joint(1, 0.7, 1)
+
+		time.sleep(1)
+
+		#get hand to drop position
+		for n in range(len(self.drop_position)):
+			self.move_joint(n, self.drop_position[n], 1)
+
+		time.sleep(2)
+
+		#open grabber
+		self.move_joint(5, 0, 1)
+
+		time.sleep(1)
+
+		#get hand to resting position
+		for n in range(len(self.rest_position)):
+			self.move_joint(n, self.rest_position[n], 1)
+
 		print "Movement commands sent!"
+
 		self.update_position=False
 
 	def move_joint(self, joint_id, angle, speed):
 		""" joint_id is a number from 0 to 5
 			angle is the angle expressed in radians
 			speed is the wanted movement speed"""
+		tr_angle = self.transform_angle(joint_id, angle)
 		msg = MoveJoint()
 		msg.joint = joint_id
-		msg.position = angle
+		msg.position = tr_angle
 		msg.speed = speed
 
 		self.pub_joint.publish(msg)
 
+	def transform_angle(self, joint_id, angle):
+		#print "--------------------------------------------------"
+		#print "ANGLE", angle
+		#print "LIMITS:", self.limits[joint_id][0] , self.limits[joint_id][1]
+		angle = angle * abs(self.limits[joint_id][1] - self.limits[joint_id][0])
+		#print "angle * range: ", angle
+		angle = angle + self.limits[joint_id][0] 
+		#print "end angle: ", angle
+		#print "--------------------------------------------------"
+		return angle
+
 if __name__=="__main__":
 	arm_mover = RobotArm()
 
-	r = rospy.Rate(2)
+	r = rospy.Rate(1)
 	arm_mover.get_desc()
 	
 	while not rospy.is_shutdown():
